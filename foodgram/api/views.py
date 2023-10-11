@@ -1,5 +1,4 @@
-from .models import Recipe
-from .serializers import RecipeSerializer
+from recipes.models import Recipe
 from django.shortcuts import get_object_or_404 
 from rest_framework import filters, mixins, viewsets 
 from rest_framework import viewsets 
@@ -8,11 +7,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import generics
 from . import serializers
 from users.models import User
+from recipes.models import Ingredient, Tag
 
-from .permissions import IsAuthorOrReadOnly 
-from .serializers import (RecipeSerializer, FollowSerializer) 
+# from .permissions import IsAuthorOrReadOnly 
+from .serializers import (RecipeSerializer, SubscriptionSerializer, IngredientSerializer, TagSerializer) 
 
-from posts.models import Recipe
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
@@ -41,9 +40,9 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
  
 
- class FollowViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
-                    viewsets.GenericViewSet): 
-    serializer_class = FollowSerializer 
+class SubscriptionViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
+                    viewsets.GenericViewSet):
+    serializer_class = SubscriptionSerializer 
     filter_backends = (filters.SearchFilter, ) 
     search_fields = ('following__username', ) 
 

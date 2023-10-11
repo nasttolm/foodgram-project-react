@@ -2,9 +2,9 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField 
 from rest_framework.validators import UniqueTogetherValidator 
  
-from posts.models import Resipe, Follow 
+from recipes.models import Recipe, Tag, Ingredient
  
-from users.models import User
+from users.models import User, Subscription
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,15 +23,15 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = '__all__'
 
-class ResipeSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         fields = '__all__'
-        model = Post
+        model = Recipe
 
 
-class FollowSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,
@@ -44,11 +44,11 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('user', 'following')
-        model = Follow
+        model = Subscription
 
         validators = [
             UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
+                queryset=Subscription.objects.all(),
                 fields=('user', 'following')
             )
         ]

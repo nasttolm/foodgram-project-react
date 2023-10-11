@@ -10,3 +10,4 @@ from djoser.views import UserViewSet
 
 class FoodgramUserViewSet(UserViewSet):
     pass
+    
