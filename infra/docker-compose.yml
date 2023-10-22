@@ -32,9 +32,9 @@ services:
       - '5432:5432'
   # backend:
   #   build: ../foodgram/
-  #   # env_file: .env
+  #   env_file: .env
   #   # volumes:
-  #     # - static:/static
-  #     # - media:/app/media
+  #   #   # - static:/static
+  #   #   - media:/app/media
   #   depends_on:
   #     - db
