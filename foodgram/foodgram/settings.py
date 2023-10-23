@@ -28,12 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # DEBUG = os.getenv("DEBUG") == "True"
 
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(' ')
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(' ')
 
 SECRET_KEY = 'django-insecure-6xvafd-)!1q#b@l^ff2#b(i^adxb=f*-fm)nt1+w54uher*o+6'
 DEBUG = True
 
-ALLOWED_HOSTS = ['158.160.70.166', '127.0.0.1', 'localhost', 'https://foodgram.mokhnatkin.org']
+# ALLOWED_HOSTS = ['158.160.70.166', '127.0.0.1', 'localhost', 'https://foodgram.mokhnatkin.org']
 
 # Application definition
 
