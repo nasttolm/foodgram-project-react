@@ -1,9 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from rest_framework.throttling import UserRateThrottle
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password
+
 
 class CustomAccounManager(BaseUserManager):
 
@@ -23,6 +22,7 @@ class CustomAccounManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self._create_user(email, password, **extra_fields)
+
 
 class User(AbstractUser):
     username = models.CharField(
@@ -53,17 +53,13 @@ class User(AbstractUser):
     )
     objects = CustomAccounManager()
 
-    # USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['username']
-
     class Meta:
         ordering = ['id']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        
+
     def __str__(self):
         return self.username
-
 
 
 class Subscription(models.Model):

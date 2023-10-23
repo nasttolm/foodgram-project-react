@@ -24,15 +24,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-123")
+
+# DEBUG = os.getenv("DEBUG") == "True"
+
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(' ')
+
 SECRET_KEY = 'django-insecure-6xvafd-)!1q#b@l^ff2#b(i^adxb=f*-fm)nt1+w54uher*o+6'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-# DEBUG = False
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['158.160.70.166', '127.0.0.1', 'localhost', 'https://foodgram.mokhnatkin.org']
 
 # Application definition
 
@@ -104,16 +105,20 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.UserAttributeSimilarityValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.MinimumLengthValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.CommonPasswordValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.NumericPasswordValidator'),
     },
 ]
 
@@ -149,30 +154,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-
-# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
-
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.TokenAuthentication',
-#     ],
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated',
-#     ]
-# }
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-        # 'rest_framework.permissions.IsAuthenticated'
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.'
+                                'DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'api.paginations.LimitPageNumberPagination',
     'PAGE_SIZE': 6,
 }
@@ -181,7 +174,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
-} 
+}
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -193,8 +186,4 @@ DJOSER = {
         'user': 'api.serializers.CustomUserSerializer',
         'current_user': 'api.serializers.CustomUserSerializer',
     },
-    # 'PERMISSIONS': {
-    #     'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
-    #     'user_list': ['rest_framework.permissions.AllowAny']
-    # },
 }

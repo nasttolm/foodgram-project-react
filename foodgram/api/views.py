@@ -1,34 +1,30 @@
-from django.http import HttpResponse
-from recipes.models import IngredientAmount, Recipe
-from django.shortcuts import get_object_or_404 
+from . import serializers
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Exists, OuterRef
-from rest_framework import filters, mixins, viewsets, permissions, status
-from rest_framework.pagination import LimitOffsetPagination 
-from rest_framework.permissions import IsAuthenticatedOrReadOnly 
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
+from recipes.models import Ingredient, Tag, ShoppingCart, Favorite
+from recipes.models import IngredientAmount, Recipe
+from rest_framework import filters, viewsets, permissions, status
 from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from . import serializers
 from users.models import User, Subscription
-from recipes.models import Ingredient, Tag, ShoppingCart, Favorite
-from .permissions import AuthorAdminOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
-from django.db.models import Sum
-
-
-# from .utils import EnablePartialUpdateMixin
 
 from .filters import RecipeFilter
-from .serializers import (SubscriptionSerializer, IngredientSerializer, 
-                          TagSerializer, RecipeReadSerializer, RecipeCreateSerializer) 
+from .serializers import (SubscriptionSerializer, IngredientSerializer,
+                          TagSerializer, RecipeReadSerializer,
+                          RecipeCreateSerializer)
+
 
 class ManageFavorite:
     @action(
-      detail=True, 
-      methods=['post', 'delete'], 
-      url_path='favorite', 
+      detail=True,
+      methods=['post', 'delete'],
+      url_path='favorite',
       permission_classes=[permissions.IsAuthenticated, ]
     )
     def favorite(self, request, pk):
@@ -56,17 +52,18 @@ class ManageFavorite:
                 {'message': 'Контент удален из избранного'},
                 status=status.HTTP_200_OK
             )
-    
+
     def annotate_qs_is_favorite_field(self, queryset):
         if self.request.user.is_authenticated:
             is_favorite_subquery = Favorite.objects.filter(
-                object_id=OuterRef('pk'), 
-                user=self.request.user, 
+                object_id=OuterRef('pk'),
+                user=self.request.user,
                 content_type=ContentType.objects.get_for_model(queryset.model)
             )
-            queryset = queryset.annotate(is_favorite=Exists(is_favorite_subquery))
+            queryset = queryset.annotate(
+                is_favorite=Exists(is_favorite_subquery))
         return queryset
-    
+
     @action(
         detail=False,
         methods=['get'],
@@ -82,9 +79,9 @@ class ManageFavorite:
 
 class ManageShopingCart:
     @action(
-      detail=True, 
-      methods=['post', 'delete'], 
-      url_path='shopping_cart', 
+      detail=True,
+      methods=['post', 'delete'],
+      url_path='shopping_cart',
       permission_classes=[permissions.IsAuthenticated, ]
     )
     def shopping_cart(self, request, pk):
@@ -126,7 +123,8 @@ class UserDetail(generics.RetrieveAPIView):
 
 class CustomUserViewSet(UserViewSet):
 
-    @action(methods=['get'], detail=False, permission_classes=(permissions.IsAuthenticated,))
+    @action(methods=['get'], detail=False, permission_classes=(
+            permissions.IsAuthenticated,))
     def subscriptions(self, request):
         user = request.user
         followings = User.objects.filter(following__user=user)
@@ -172,16 +170,15 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
         if self.request.method == 'POST' or self.request.method == 'PATCH':
             return RecipeCreateSerializer
         return None
-        
 
-    def perform_create(self, serializer): 
+    def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
     def get_queryset(self):
         queryset = Recipe.objects.all()
         queryset = self.annotate_qs_is_favorite_field(queryset)
@@ -197,7 +194,7 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
                 'ingredient__units')\
             .order_by('ingredient__name')\
             .annotate(total_amount=Sum('amount'))
-        
+
         shopping_list = 'Cписок покупок:\n' + '\n'.join([
             f'{ingredient["ingredient__name"]}'
             f' - {ingredient["total_amount"]}'
@@ -206,12 +203,13 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
         ])
 
         return self.build_txt(shopping_list)
-    
+
     def build_txt(self, shopping_list):
         filename = 'shopping_cart.txt'
         response = HttpResponse(shopping_list, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
+
 
 class IngredientsSearchFilter(filters.SearchFilter):
     search_param = 'name'
@@ -229,16 +227,3 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     pagination_class = None
     serializer_class = TagSerializer
- 
-
-# class SubscriptionViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
-#                     viewsets.GenericViewSet):
-#     serializer_class = SubscriptionSerializer 
-#     filter_backends = (filters.SearchFilter, ) 
-#     search_fields = ('following__username', ) 
-
-#     def get_queryset(self): 
-#         return self.request.user.follower 
-
-#     def perform_create(self, serializer): 
-#         serializer.save(user=self.request.user) 

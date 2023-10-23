@@ -29,11 +29,13 @@ class Tag(models.Model):
         unique=True,
         null=True,
     )
+
     class Meta:
         ordering = ['name']
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
-    def __str__(self): 
+
+    def __str__(self):
         return self.name
 
 
@@ -42,11 +44,11 @@ class Ingredient(models.Model):
         'Название ингридиента',
         max_length=200
     )
-    # quantity = 
     units = models.CharField(
         'Единицы измерения',
         max_length=200
     )
+
     class Meta:
         ordering = ['name']
         verbose_name = 'Ингредиент'
@@ -55,6 +57,7 @@ class Ingredient(models.Model):
             models.UniqueConstraint(fields=['name', 'units'],
                                     name='unique ingredient')
         ]
+
     def __str__(self):
         return f'{self.name}, {self.units}'
 
@@ -71,12 +74,12 @@ class Recipe(models.Model):
         auto_now_add=True
     )
     name = models.CharField(
-        'Название рецепта', 
+        'Название рецепта',
         max_length=200
     )
-    image = models.ImageField( 
+    image = models.ImageField(
         'Изображение',
-        upload_to='recipes/', 
+        upload_to='recipes/',
         blank=True,
     )
     text = models.TextField(
@@ -93,15 +96,10 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
-        # validators=(
-        #     MinValueValidator(
-        #         1, message='Время должно быть больше 1 минуты'),
-        #     MaxValueValidator(
-        #         30000, message='Время  не должно быть больше 30000 минут')
-        # )
-    ) 
+    )
     favorites = GenericRelation('Favorite')
     shopping_cart = GenericRelation('ShoppingCart')
+
     class Meta:
         ordering = ['-pub_date']
         verbose_name = 'Рецепт'
@@ -113,7 +111,8 @@ class Recipe(models.Model):
                 name='unique_reipe_author',
             ),
         )
-    def __str__(self): 
+
+    def __str__(self):
         return self.name
 
 
@@ -138,19 +137,6 @@ class ShoppingCart(models.Model):
         return f'{self.user.username} - {self.content_type.name}'
 
 
-# class Favorite(models.Model):
-#     recipe = models.ForeignKey(
-#         Recipe,
-#         verbose_name='Рецепт',
-#         on_delete=models.CASCADE,
-#         related_name='favorites'
-#     )
-#     user = models.ForeignKey(
-#         User,
-#         verbose_name='Пользователь',
-#         on_delete=models.CASCADE,
-#         related_name='favorites'
-#     )
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -167,8 +153,9 @@ class Favorite(models.Model):
                 name='unique_user_content_type_object_id'
             )
         ]
+
     def __str__(self):
-         return f'{self.user.username} - {self.content_type.name}'
+        return f'{self.user.username} - {self.content_type.name}'
 
 
 class AchievementTag(models.Model):
@@ -184,27 +171,7 @@ class AchievementRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.achievement} {self.tag}' 
-
-
-# class Subscription(models.Model):
-#     subscription_id =
-#     user_id =
-
-# class Follow(models.Model): 
-#     user = models.ForeignKey( 
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='follower' 
-#     )
-#     author = models.ForeignKey( 
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='following' 
-#     )
-
-#     def __str__(self): 
-#         return f'{self.user} is subscribed to the {self.author}' 
+        return f'{self.achievement} {self.tag}'
 
 
 class IngredientAmount(models.Model):
@@ -222,13 +189,6 @@ class IngredientAmount(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Количество ингредиента',
-        # validators=(
-        #     MinValueValidator(
-        #         1, message='Количество не может быть меньше 1'),
-        #     MaxValueValidator(
-        #         30000, message='Количество не может быть больше 30000'
-        #     )
-        # ),
     )
 
     class Meta:
@@ -244,5 +204,3 @@ class IngredientAmount(models.Model):
 
     def __str__(self):
         return f'{self.ingredient.name} - {self.amount}'
-
-
