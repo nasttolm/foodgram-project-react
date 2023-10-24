@@ -22,10 +22,10 @@ from .serializers import (SubscriptionSerializer, IngredientSerializer,
 
 class ManageFavorite:
     @action(
-      detail=True,
-      methods=['post', 'delete'],
-      url_path='favorite',
-      permission_classes=[permissions.IsAuthenticated, ]
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='favorite',
+        permission_classes=[permissions.IsAuthenticated, ]
     )
     def favorite(self, request, pk):
         instance = self.get_object()
@@ -79,10 +79,10 @@ class ManageFavorite:
 
 class ManageShopingCart:
     @action(
-      detail=True,
-      methods=['post', 'delete'],
-      url_path='shopping_cart',
-      permission_classes=[permissions.IsAuthenticated, ]
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='shopping_cart',
+        permission_classes=[permissions.IsAuthenticated, ]
     )
     def shopping_cart(self, request, pk):
         instance = self.get_object()
