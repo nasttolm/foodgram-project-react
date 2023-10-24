@@ -9,9 +9,8 @@ admin.site.register(Favorite)
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'image', 'text', 'ingredients',
-                    'time', 'pub_date', 'author')
-    search_fields = ('name', 'time')
+    list_display = ('name', 'author', 'in_favorites')
+    search_fields = ('name')
     list_filter = ('name', 'author', 'tags')
     readonly_fields = ('in_favorites',)
     empty_value_display = '-пусто-'
