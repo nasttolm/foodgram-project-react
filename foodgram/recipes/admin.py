@@ -9,11 +9,14 @@ admin.site.register(Favorite)
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'favorites')
+    list_display = ('name', 'author', 'in_favorites')
     search_fields = ('name')
     list_filter = ('name', 'author', 'tags')
-    readonly_fields = ('favorites',)
+    readonly_fields = ('in_favorites',)
     empty_value_display = '-пусто-'
+
+    def in_favorites(self, obj):
+        return obj.favorites.count()
 
 
 class IngredientAmountInline(admin.TabularInline):
