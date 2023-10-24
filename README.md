@@ -24,15 +24,10 @@ JWT
 2. Создайте файл /infra/.env:
 ```
 POSTGRES_USER=django_user
-```
 POSTGRES_PASSWORD=mysecretpassword
-```
 POSTGRES_DB=django
-```
 DB_HOST=localhost
-```
 DB_PORT=5432
-```
 SECRET_KEY=django-insecure-6xvafd-)!1q#b@08y5thisdchuasfd
 ```
 3. Go to the /infra
