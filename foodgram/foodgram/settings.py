@@ -36,6 +36,8 @@ DEBUG = True
 
 # Application definition
 
+CSRF_TRUSTED_ORIGINS = ['https://foodgram.mokhnatkin.org/']
+
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
