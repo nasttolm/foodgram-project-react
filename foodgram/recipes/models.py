@@ -1,4 +1,4 @@
-from colorfield.fields import ColorField
+from django.core.validators import RegexValidator
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -20,10 +20,17 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    color = ColorField(
+    color = models.CharField(
         'Цвет в HEX',
+        max_length=7,
         null=True,
-        default='#FF0000',
+        validators=[
+            RegexValidator(
+                '^#([a-fA-F0-9]{6})',
+                message='Поле должно содержать HEX-код выбранного цвета.'
+            )
+        ]
+
     )
     slug = models.SlugField(
         'Слаг',
