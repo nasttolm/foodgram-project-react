@@ -24,7 +24,6 @@ class Tag(models.Model):
         'Цвет в HEX',
         null=True,
         default='#FF0000',
-        format="hexa",
     )
     slug = models.SlugField(
         'Слаг',
