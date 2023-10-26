@@ -25,6 +25,8 @@ class CustomAccounManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """Модель для пользователей."""
+
     username = models.CharField(
         'Логин',
         max_length=150,

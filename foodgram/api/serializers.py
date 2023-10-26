@@ -1,9 +1,9 @@
-from drf_base64.fields import Base64ImageField
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from django.shortcuts import get_object_or_404
+
+from drf_base64.fields import Base64ImageField
 
 from recipes.models import (Recipe, Tag, Ingredient, Achievement,
                             IngredientAmount, Favorite, ShoppingCart)
@@ -18,6 +18,7 @@ class AchievementSerializer(serializers.ModelSerializer):
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
+    """Сериализатор для создания пользователя."""
 
     class Meta:
         model = User
@@ -32,6 +33,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
+    """Сериализатор для модели User."""
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
@@ -53,12 +55,16 @@ class CustomUserSerializer(UserSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для вывода тэгов."""
+
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для вывода ингредиентов."""
+
     class Meta:
         model = Ingredient
         fields = '__all__'
@@ -155,6 +161,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания рецептов."""
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()

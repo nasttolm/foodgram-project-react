@@ -15,6 +15,8 @@ class Achievement(models.Model):
 
 
 class Tag(models.Model):
+    """Модель для описания тега."""
+
     name = models.CharField(
         'Название',
         max_length=200,
@@ -48,6 +50,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    """Модель для описания ингредиента."""
+
     name = models.CharField(
         'Название ингридиента',
         max_length=200
@@ -71,6 +75,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    """Модель для описания рецепта."""
+
     author = models.ForeignKey(
         User,
         verbose_name='Автор рецепта',
@@ -125,6 +131,8 @@ class Recipe(models.Model):
 
 
 class ShoppingCart(models.Model):
+    """Модель для формирования покупок."""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -146,6 +154,8 @@ class ShoppingCart(models.Model):
 
 
 class Favorite(models.Model):
+    """Модель для создания избранного."""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -183,6 +193,8 @@ class AchievementRecipe(models.Model):
 
 
 class IngredientAmount(models.Model):
+    """Модель для описания количества ингредиентов в отдельных рецептах."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
