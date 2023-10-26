@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -19,10 +20,11 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    color = models.CharField(
+    color = ColorField(
         'Цвет в HEX',
-        max_length=7,
         null=True,
+        default='#FF0000',
+        format="hexa",
     )
     slug = models.SlugField(
         'Слаг',

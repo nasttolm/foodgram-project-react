@@ -24,15 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-123")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-123")
 
-# DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = os.getenv("DEBUG") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(' ')
-
-SECRET_KEY = ('django-insecure-6xvafd-)!1q#b@l^ff2#b(i^adxb=f*-fm)'
-              'nt1+w54uher*o+6')
-DEBUG = True
 
 # Application definition
 
@@ -52,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'django_filters',
+    'colorfield',
 ]
 
 MIDDLEWARE = [
@@ -183,7 +180,6 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user_create': 'api.serializers.CustomUserCreateSerializer',
         'user': 'api.serializers.CustomUserSerializer',
         'current_user': 'api.serializers.CustomUserSerializer',
     },
