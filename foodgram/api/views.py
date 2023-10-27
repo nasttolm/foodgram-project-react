@@ -1,33 +1,37 @@
-from . import serializers
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Exists, OuterRef
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import Ingredient, Tag, ShoppingCart, Favorite
-from recipes.models import IngredientAmount, Recipe
 from rest_framework import filters, viewsets, permissions, status
 from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from users.models import User, Subscription
 
-from .filters import RecipeFilter
 from .serializers import (SubscriptionSerializer, IngredientSerializer,
                           TagSerializer, RecipeReadSerializer,
                           RecipeCreateSerializer)
+from . import serializers
+from .filters import RecipeFilter
+from users.models import User, Subscription
+from recipes.models import (Ingredient, Tag, ShoppingCart, Favorite,
+                            IngredientAmount, Recipe)
 
 
 class ManageFavorite:
+    """Содержит логику управления избронными объектами."""
+
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=('post', 'delete'),
         url_path='favorite',
-        permission_classes=[permissions.IsAuthenticated, ]
+        permission_classes=(permissions.IsAuthenticated)
     )
     def favorite(self, request, pk):
+        """Добавляет или удаляет из избранного."""
+
         instance = self.get_object()
         content_type = ContentType.objects.get_for_model(instance)
         favorite_obj, created = Favorite.objects.get_or_create(
@@ -54,6 +58,8 @@ class ManageFavorite:
             )
 
     def annotate_qs_is_favorite_field(self, queryset):
+        """Фильтрует избранные объекты."""
+
         if self.request.user.is_authenticated:
             is_favorite_subquery = Favorite.objects.filter(
                 object_id=OuterRef('pk'),
@@ -66,11 +72,13 @@ class ManageFavorite:
 
     @action(
         detail=False,
-        methods=['get'],
+        methods=('get'),
         url_path='favorites',
-        permission_classes=[permissions.IsAuthenticated, ]
+        permission_classes=(permissions.IsAuthenticated)
     )
     def favorites(self, request):
+        """Выдает список избранных для текущего пользователя."""
+
         queryset = self.get_queryset().filter(is_favorite=True)
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(queryset, many=True)
@@ -78,13 +86,17 @@ class ManageFavorite:
 
 
 class ManageShopingCart:
+    """Содержит логику управления объектами из корзины."""
+
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=('post', 'delete'),
         url_path='shopping_cart',
-        permission_classes=[permissions.IsAuthenticated, ]
+        permission_classes=(permissions.IsAuthenticated)
     )
     def shopping_cart(self, request, pk):
+        """Добавляет или удаляет из корзины."""
+
         instance = self.get_object()
         content_type = ContentType.objects.get_for_model(instance)
         shopping_cart_obj, created = ShoppingCart.objects.get_or_create(
@@ -112,20 +124,27 @@ class ManageShopingCart:
 
 
 class UserList(generics.ListAPIView):
+    """Определяет REST методы для работы со списком пользователей."""
+
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
 
 
 class UserDetail(generics.RetrieveAPIView):
+    """REST метод для чтения деталей пользователя."""
+
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
 
 
 class CustomUserViewSet(UserViewSet):
+    """Определяет дополнителье REST методы для работы с пользователем."""
 
-    @action(methods=['get'], detail=False, permission_classes=(
+    @action(methods=('get'), detail=False, permission_classes=(
             permissions.IsAuthenticated,))
     def subscriptions(self, request):
+        """REST метод для вывода списка подписок."""
+
         user = request.user
         followings = User.objects.filter(following__user=user)
         pages = self.paginate_queryset(followings)
@@ -135,9 +154,11 @@ class CustomUserViewSet(UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=['post', 'delete'], detail=True,
+    @action(methods=('post', 'delete'), detail=True,
             permission_classes=(permissions.IsAuthenticated,))
     def subscribe(self, request, id):
+        """REST методы для подписки/отписки."""
+
         user = request.user
         author = get_object_or_404(User, id=id)
 
@@ -160,6 +181,8 @@ class CustomUserViewSet(UserViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
+    """Определяет все REST методы для работы с рецептами."""
+
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -184,9 +207,11 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
         queryset = self.annotate_qs_is_favorite_field(queryset)
         return queryset
 
-    @action(methods=['get'], detail=False,
-            permission_classes=[permissions.IsAuthenticated])
+    @action(methods=('get'), detail=False,
+            permission_classes=(permissions.IsAuthenticated))
     def download_shopping_cart(self, request):
+        """Формирует и возвращает список покупок в txt формате."""
+
         ingredients = IngredientAmount.objects\
             .filter(recipe__shopping_cart__user=request.user)\
             .values(
@@ -205,6 +230,8 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
         return self.build_txt(shopping_list)
 
     def build_txt(self, shopping_list):
+        """Конструирует txt файл из списка ингрилиентов."""
+
         filename = 'shopping_cart.txt'
         response = HttpResponse(shopping_list, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
@@ -212,10 +239,14 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
 
 
 class IngredientsSearchFilter(filters.SearchFilter):
+    """Переопределяет название параметра поиска."""
+
     search_param = 'name'
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Определяет REST методы для работы с рецептами."""
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
@@ -224,6 +255,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Определяет REST методы для работы с тегами."""
+
     queryset = Tag.objects.all()
     pagination_class = None
     serializer_class = TagSerializer

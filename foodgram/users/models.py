@@ -1,10 +1,11 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import BaseUserManager
+from django.db import models
 
 
 class CustomAccounManager(BaseUserManager):
+    """Переопределяет методы для работы с моделью пользователя."""
 
     def _create_user(self, email, password, **extra_fields):
         email = self.normalize_email(email)
@@ -65,6 +66,8 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
+    """Модель подписки."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

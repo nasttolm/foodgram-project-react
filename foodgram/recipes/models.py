@@ -1,8 +1,8 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import RegexValidator
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericRelation
 
 from users.models import User
 
@@ -32,7 +32,6 @@ class Tag(models.Model):
                 message='Поле должно содержать HEX-код выбранного цвета.'
             )
         ]
-
     )
     slug = models.SlugField(
         'Слаг',
