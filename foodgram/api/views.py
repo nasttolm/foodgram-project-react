@@ -27,7 +27,7 @@ class ManageFavorite:
         detail=True,
         methods=('post', 'delete'),
         url_path='favorite',
-        permission_classes=(permissions.IsAuthenticated)
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def favorite(self, request, pk):
         """Добавляет или удаляет из избранного."""
@@ -74,7 +74,7 @@ class ManageFavorite:
         detail=False,
         methods=('get'),
         url_path='favorites',
-        permission_classes=(permissions.IsAuthenticated)
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def favorites(self, request):
         """Выдает список избранных для текущего пользователя."""
@@ -92,7 +92,7 @@ class ManageShopingCart:
         detail=True,
         methods=('post', 'delete'),
         url_path='shopping_cart',
-        permission_classes=(permissions.IsAuthenticated)
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def shopping_cart(self, request, pk):
         """Добавляет или удаляет из корзины."""
