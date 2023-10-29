@@ -38,5 +38,14 @@ SECRET_KEY=django-insecure-6xvafd-)!1q#b@08y5thisdchuasfd
 8. Fill the database with ingredients. Run command: docker-compose exec backend python manage.py load_ingredients
 9. To correctly create a recipe through the frontend, you need to create tags in the database through the admin panel.
 10. The API documentation is located at: http://localhost/api/docs/redoc.html
+
+### Website
+Link to the website: https://foodgram.mokhnatkin.org
+```
+Access to the admin panel:
+- link: https://foodgram.mokhnatkin.org/admin/
+- login: admin
+- password: admin
+
 ### Authors
 Anastasia Tolmacheva
