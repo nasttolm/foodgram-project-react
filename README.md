@@ -46,6 +46,6 @@ Access to the admin panel:
 - link: https://foodgram.mokhnatkin.org/admin/
 - login: admin
 - password: admin
-
+```
 ### Authors
 Anastasia Tolmacheva
