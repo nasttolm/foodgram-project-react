@@ -41,7 +41,7 @@ class ManageFavorite:
         )
 
         serializer = RecipeFavoriteSerializer(instance,
-                                                  context={'request': request})
+                                              context={'request': request})
         if request.method == 'POST':
             if created:
                 favorite_obj.save()

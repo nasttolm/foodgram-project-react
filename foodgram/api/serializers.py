@@ -189,7 +189,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
         validators = [
             UniqueTogetherValidator(
-                queryset=Recipe.objects.all(),  
+                queryset=Recipe.objects.all(),
                 fields=('author', 'name')
             )
         ]
