@@ -72,7 +72,7 @@ class ManageFavorite:
 
     @action(
         detail=False,
-        methods=('get'),
+        methods=('get',),
         url_path='favorites',
         permission_classes=(permissions.IsAuthenticated,)
     )
@@ -140,7 +140,7 @@ class UserDetail(generics.RetrieveAPIView):
 class CustomUserViewSet(UserViewSet):
     """Определяет дополнителье REST методы для работы с пользователем."""
 
-    @action(methods=('get'), detail=False, permission_classes=(
+    @action(methods=('get',), detail=False, permission_classes=(
             permissions.IsAuthenticated,))
     def subscriptions(self, request):
         """REST метод для вывода списка подписок."""
@@ -207,8 +207,8 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
         queryset = self.annotate_qs_is_favorite_field(queryset)
         return queryset
 
-    @action(methods=('get'), detail=False,
-            permission_classes=(permissions.IsAuthenticated))
+    @action(methods=('get',), detail=False,
+            permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         """Формирует и возвращает список покупок в txt формате."""
 
