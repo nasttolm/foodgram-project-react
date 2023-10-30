@@ -67,6 +67,8 @@ class TagSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для вывода ингредиентов."""
 
+    measurement_unit = serializers.CharField(source='units')
+
     class Meta:
         model = Ingredient
         fields = '__all__'
