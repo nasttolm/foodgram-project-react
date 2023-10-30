@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -109,6 +110,12 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
+        validators=(
+            MinValueValidator(
+                1, message='Время должно быть больше 1 минуты'),
+            MaxValueValidator(
+                30000, message='Время  не должно быть больше 30000 минут')
+        )
     )
     favorites = GenericRelation('Favorite')
     shopping_cart = GenericRelation('ShoppingCart')

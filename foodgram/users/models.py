@@ -1,6 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -32,6 +33,9 @@ class User(AbstractUser):
         'Логин',
         max_length=150,
         unique=True,
+        validators=[
+            RegexValidator(r'^[\w.@+-]+\Z')
+        ]
     )
     first_name = models.CharField(
         'Имя',

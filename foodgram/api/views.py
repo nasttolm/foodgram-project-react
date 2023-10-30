@@ -10,11 +10,13 @@ from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .serializers import (SubscriptionSerializer, IngredientSerializer,
+from .serializers import (RecipeShoppingCartSerializer, SubscriptionSerializer,
+                          IngredientSerializer, RecipeFavoriteSerializer,
                           TagSerializer, RecipeReadSerializer,
                           RecipeCreateSerializer)
 from . import serializers
 from .filters import RecipeFilter
+from .permissions import AuthorAdminOrReadOnly
 from users.models import User, Subscription
 from recipes.models import (Ingredient, Tag, ShoppingCart, Favorite,
                             IngredientAmount, Recipe)
@@ -38,17 +40,17 @@ class ManageFavorite:
             user=request.user, content_type=content_type, object_id=instance.id
         )
 
+        serializer = RecipeFavoriteSerializer(instance,
+                                                  context={'request': request})
         if request.method == 'POST':
             if created:
                 favorite_obj.save()
-                return Response(
-                    {'message': 'Контент добавлен в избранное'},
-                    status=status.HTTP_201_CREATED
-                )
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
             else:
                 return Response(
                     {'message': 'Контент уже находится в избранном'},
-                    status=status.HTTP_201_CREATED
+                    status=status.HTTP_400_BAD_REQUEST
                 )
         else:
             favorite_obj.delete()
@@ -103,17 +105,17 @@ class ManageShopingCart:
             user=request.user, content_type=content_type, object_id=instance.id
         )
 
+        serializer = RecipeShoppingCartSerializer(instance,
+                                                  context={'request': request})
         if request.method == 'POST':
             if created:
                 shopping_cart_obj.save()
-                return Response(
-                    {'message': 'Контент добавлен в корзину'},
-                    status=status.HTTP_201_CREATED
-                )
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
             else:
                 return Response(
                     {'message': 'Контент уже находится в корзине'},
-                    status=status.HTTP_201_CREATED
+                    status=status.HTTP_400_BAD_REQUEST
                 )
         else:
             shopping_cart_obj.delete()
@@ -163,6 +165,18 @@ class CustomUserViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
 
         if request.method == 'POST':
+            if user.id == author.id:
+                return Response(
+                    {'error': 'Нельзя подписаться на себя'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if Subscription.objects.get(user=user, author=author):
+                return Response(
+                    {'error': 'Вы уже подписаны на пользователя'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             Subscription.objects.create(user=user, author=author)
             serializer = SubscriptionSerializer(
                 author, context={'request': request})
@@ -185,6 +199,7 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
 
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
+    permission_classes = (AuthorAdminOrReadOnly,)
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
@@ -196,6 +211,7 @@ class RecipeViewSet(viewsets.ModelViewSet, ManageFavorite, ManageShopingCart):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -251,7 +267,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = [IngredientsSearchFilter]
-    search_fields = ['$name']
+    search_fields = ['^name']
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

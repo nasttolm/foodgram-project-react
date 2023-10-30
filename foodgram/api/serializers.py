@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Recipe, Tag, Ingredient, Achievement,
@@ -71,7 +72,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
 
 
 class BriefRecipeSerializer(serializers.ModelSerializer):
@@ -110,17 +111,13 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
-    units = serializers.ReadOnlyField(
+    measurement_unit = serializers.ReadOnlyField(
         source='ingredient.units'
     )
 
     class Meta:
         model = IngredientAmount
-        fields = ('id',
-                  'name',
-                  'units',
-                  'amount'
-                  )
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class IngredientAmountCreateSerializer(serializers.ModelSerializer):
@@ -154,7 +151,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = '__all__'
+        exclude = ('pub_date', )
 
     def get_is_favorited(self, obj):
         """Проверяет добавлен ли рецепт в избранное."""
@@ -192,21 +189,52 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
         validators = [
             UniqueTogetherValidator(
-                queryset=Recipe.objects.all(),
+                queryset=Recipe.objects.all(),  
                 fields=('author', 'name')
             )
         ]
+
+    def validate_ingredients(self, value):
+        if len(value) == 0:
+            raise serializers.ValidationError(
+                'Ингредиенты должны быть указаны.')
+        seen = set()
+        dupes = [x['id'] for x in value if x['id'] in seen
+                 or seen.add(x['id'])]
+        if len(dupes) > 0:
+            raise serializers.ValidationError(
+                'Ингредиенты не должны повторяться.')
+        return value
+
+    def validate_tags(self, value):
+        if len(value) == 0:
+            raise serializers.ValidationError(
+                'Теги должны быть указаны.')
+        seen = set()
+        dupes = [x for x in value if x in seen
+                 or seen.add(x)]
+        if len(dupes) > 0:
+            raise serializers.ValidationError(
+                'Теги не должны повторяться.')
+        return value
 
     def add_tags_ingredients(self, recipe, tags, ingredients):
         """Добавляет теги и ингридиенты в рецепт."""
 
         recipe.tags.set(tags)
+        try:
+            prepared_ingredient = [(
+                Ingredient.objects.get(id=ingredient['id']),
+                ingredient['amount']) for ingredient in ingredients]
+        except ObjectDoesNotExist:
+            raise ValidationError('Ингредиент не существует.')
+
         IngredientAmount.objects.bulk_create(
             [IngredientAmount(
                 recipe=recipe,
-                ingredient=get_object_or_404(Ingredient, id=ingredient['id']),
-                amount=ingredient['amount']
-            ) for ingredient in ingredients]
+                ingredient=x[0],
+                amount=x[1]
+            ) for x in prepared_ingredient]
         )
 
     def create(self, validated_data):
@@ -221,8 +249,23 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Редактирует рецепт данными переданными пользователем."""
 
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        ingredients = validated_data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError(
+                  'Ингридиенты не указаны.')
+
+        tags = validated_data.get('tags')
+        if not tags:
+            raise serializers.ValidationError(
+                  'Теги не указаны.')
+        cooking_time = validated_data.get('cooking_tim')
+        if not cooking_time:
+            raise serializers.ValidationError(
+                  'Время готовки не указаны.')
+        text = validated_data.get('text')
+        if not text:
+            raise serializers.ValidationError(
+                  'Текст пустой.')
         instance.ingredients.clear()
         instance.tags.clear()
         self.add_tags_ingredients(instance, tags, ingredients)
@@ -233,3 +276,19 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         return RecipeReadSerializer(instance,
                                     context=self.context).data
+
+
+class RecipeShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецепта добавленного в корзину."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецепта добавленного в избранное."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
