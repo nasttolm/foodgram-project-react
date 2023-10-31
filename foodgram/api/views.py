@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Exists, OuterRef
 from django.db.models import Sum
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import filters, viewsets, permissions, status
@@ -34,17 +34,33 @@ class ManageFavorite:
     def favorite(self, request, pk):
         """Добавляет или удаляет из избранного."""
 
+        try:
+            instance = self.get_object()
+        except Http404:
+            return Response({'message': 'Рецепт не найден'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         instance = self.get_object()
         content_type = ContentType.objects.get_for_model(instance)
-        favorite_obj, created = Favorite.objects.get_or_create(
-            user=request.user, content_type=content_type, object_id=instance.id
-        )
-
-        serializer = RecipeFavoriteSerializer(instance,
-                                              context={'request': request})
         if request.method == 'POST':
+            try:
+                Recipe.objects.get(id=instance.id)
+            except Recipe.DoesNotExist:
+                return Response(
+                    {'message': 'Переданный рецепт не существует'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            favorite_obj, created = Favorite.objects.get_or_create(
+                user=request.user,
+                content_type=content_type,
+                object_id=instance.id
+            )
             if created:
                 favorite_obj.save()
+                serializer = RecipeFavoriteSerializer(
+                    instance,
+                    context={'request': request})
                 return Response(serializer.data,
                                 status=status.HTTP_201_CREATED)
             else:
@@ -52,11 +68,19 @@ class ManageFavorite:
                     {'message': 'Контент уже находится в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        else:
+
+        try:
+            favorite_obj = Favorite.objects.get(
+                user=request.user,
+                content_type=content_type,
+                object_id=instance.id
+            )
             favorite_obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Favorite.DoesNotExist:
             return Response(
-                {'message': 'Контент удален из избранного'},
-                status=status.HTTP_200_OK
+                {'message': 'Контент не находится в избранном'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     def annotate_qs_is_favorite_field(self, queryset):
@@ -99,15 +123,23 @@ class ManageShopingCart:
     def shopping_cart(self, request, pk):
         """Добавляет или удаляет из корзины."""
 
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except Http404:
+            return Response({'message': 'Рецепт не найден'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         content_type = ContentType.objects.get_for_model(instance)
-        shopping_cart_obj, created = ShoppingCart.objects.get_or_create(
-            user=request.user, content_type=content_type, object_id=instance.id
-        )
 
         serializer = RecipeShoppingCartSerializer(instance,
                                                   context={'request': request})
         if request.method == 'POST':
+            shopping_cart_obj, created = ShoppingCart.objects.get_or_create(
+                user=request.user,
+                content_type=content_type,
+                object_id=instance.id
+            )
+
             if created:
                 shopping_cart_obj.save()
                 return Response(serializer.data,
@@ -117,11 +149,22 @@ class ManageShopingCart:
                     {'message': 'Контент уже находится в корзине'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        else:
+
+        try:
+            shopping_cart_obj = ShoppingCart.objects.get(
+                user=request.user,
+                content_type=content_type,
+                object_id=instance.id
+            )
             shopping_cart_obj.delete()
             return Response(
                 {'message': 'Контент удален из корзины'},
-                status=status.HTTP_200_OK
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except ShoppingCart.DoesNotExist:
+            return Response(
+                {'message': 'Контент не находится в корзине'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
@@ -142,6 +185,19 @@ class UserDetail(generics.RetrieveAPIView):
 class CustomUserViewSet(UserViewSet):
     """Определяет дополнителье REST методы для работы с пользователем."""
 
+    def get_recipes_limit(self, request):
+        param = request.query_params.get('recipes_limit')
+        if not param:
+            return None, None
+
+        try:
+            return int(param), None
+        except ValueError:
+            return None, Response(
+                {'error': 'Recipes_limit должен быть числом'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     @action(methods=('get',), detail=False, permission_classes=(
             permissions.IsAuthenticated,))
     def subscriptions(self, request):
@@ -150,9 +206,14 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         followings = User.objects.filter(following__user=user)
         pages = self.paginate_queryset(followings)
+
+        recipes_limit, err = self.get_recipes_limit(request)
+        if err:
+            return err
+
         serializer = SubscriptionSerializer(
             pages, many=True,
-            context={'request': request}
+            context={'request': request, 'limit': recipes_limit}
         )
         return self.get_paginated_response(serializer.data)
 
@@ -170,16 +231,22 @@ class CustomUserViewSet(UserViewSet):
                     {'error': 'Нельзя подписаться на себя'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-            if Subscription.objects.get(user=user, author=author):
+            try:
+                Subscription.objects.get(user=user, author=author)
                 return Response(
                     {'error': 'Вы уже подписаны на пользователя'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            except Subscription.DoesNotExist:
+                pass
+
+            recipes_limit, err = self.get_recipes_limit(request)
+            if err:
+                return err
 
             Subscription.objects.create(user=user, author=author)
             serializer = SubscriptionSerializer(
-                author, context={'request': request})
+                author, context={'request': request, 'limit': recipes_limit})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
